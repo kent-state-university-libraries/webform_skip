@@ -1,0 +1,99 @@
+<?php
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  if (empty($form['progressbar'])) {
+    return;
+  }
+
+  if (webform_skip_webform_is_disabled($form['#node']->nid)) {
+    return;
+  }
+
+  $path = drupal_get_path('module', 'webform_skip');
+  drupal_add_js($path . '/webform_skip.js');
+  drupal_add_css($path . '/webform_skip.css');
+
+  // if the confirmation page is shown in the progress bar
+  // don't show it as clickable
+  if (!empty($form['#node']->webform['progressbar_include_confirmation'])) {
+    drupal_add_css('.webform-progressbar-page:last-child {cursor: default;}', 'inline');
+  }
+
+  $form['actions']['skip'] = array(
+    '#type' => 'select',
+    '#options' => array(0 => '- Select -'),
+  );
+
+  foreach ($form['progressbar']['#page_labels'] as $i => $label) {
+    $page_num = $i + 1;
+    $form['actions']['skip']['#options'][$page_num] = $label;
+  }
+
+  $form['#submit'][] = 'webform_skip_client_form_submit';
+}
+
+/**
+ * Submit function added to webform client form.
+ *
+ * If someone clicked on the progress bar, skip to that page
+ */
+function webform_skip_client_form_submit($form, &$form_state) {
+  if ($form_state['values']['skip'] != 0) {
+    $form_state['storage']['page_num'] = $form_state['webform']['page_num'] = $form_state['values']['skip'];
+    $form_state['input']['skip'] = $form_state['values']['skip'] = 0;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function webform_skip_form_webform_configure_form_alter(&$form, &$form_state, $form_id) {
+  $form['progressbar']['webform_skip_disabled'] = array(
+    '#title' => t('Disable clickable progress bar'),
+    '#description' => t('If you do not want users of this webform to be able to skip steps by clicking the progress bar, you can disable that functionality by checking this box.'),
+    '#type' => 'checkbox',
+    '#default_value' => webform_skip_webform_is_disabled($form['#node']->nid),
+    '#weight' => 0,
+  );
+
+  $form['#submit'][] = 'webform_skip_configure_form_submit';
+}
+
+/**
+ * Submit function added to webform configure form.
+ *
+ * Save the disabled clickable progress bar settings in a variable
+ */
+function webform_skip_configure_form_submit($form, &$form_state) {
+  $nid = $form['#node']->nid;
+
+  $disabled_webforms = variable_get('webform_skip_disabled', array());
+
+  if ($form_state['values']['webform_skip_disabled']) {
+    $disabled_webforms[$nid] = $nid;
+  }
+  else {
+    unset($disabled_webforms[$nid]);
+  }
+
+  variable_set('webform_skip_disabled', $disabled_webforms);
+}
+
+
+/**
+ * Helper function.
+ *
+ * @return TRUE if a webform has had the clickable progress bar disabled in the webform settings
+ */
+function webform_skip_webform_is_disabled($nid) {
+  $disabled_webforms = variable_get('webform_skip_disabled', array());
+  if (in_array($nid, $disabled_webforms)) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}

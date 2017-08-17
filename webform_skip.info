@@ -1,0 +1,5 @@
+name = Webform Skip
+description = Allow users to click on a multi-step webform's progress bar to skip to any part of the webform
+core = 7.x
+package = Webform
+dependencies[] = webform
