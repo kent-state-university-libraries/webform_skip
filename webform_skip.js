@@ -1,10 +1,15 @@
+/**
+ * @file
+ * Listen for click events on the progress bar and act accordingly
+ */
+
 (function($) {
   Drupal.behaviors.webform_skip = {
     attach: function(context, settings) {
       $('.webform-progressbar-page').on('click', function() {
         // don't do anything if they click the "complete" progress bar
         var text = $(this).find('.webform-progressbar-page-label').text().trim();
-        if (text === 'Complete') {
+        if (text === Drupal.t('Complete')) {
           return;
         }
 
