@@ -1,13 +1,23 @@
 <?php
 
 /**
+ * @file
+ * This module makes a multi-step webform's progress bar "clickable"
+ * so users can skip to various parts of the form quickly.
+ *
+ * @author Joe Corall <jcorall@kent.edu>
+ */
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  // if this isn't a multi-step webform, abort
   if (empty($form['progressbar'])) {
     return;
   }
 
+  // if this webform has had the skip functionality disabled, abort
   if (webform_skip_webform_is_disabled($form['#node']->nid)) {
     return;
   }
@@ -22,6 +32,9 @@ function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form
     drupal_add_css('.webform-progressbar-page:last-child {cursor: default;}', 'inline');
   }
 
+  // add a form element with all the available steps/pages as options
+  // this element will be hidden from view via the CSS file added above
+  // and will be changed by clicking on a progress bar section via the JS file above
   $form['actions']['skip'] = array(
     '#type' => 'select',
     '#options' => array(0 => '- Select -'),
@@ -32,6 +45,7 @@ function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form
     $form['actions']['skip']['#options'][$page_num] = $label;
   }
 
+  // add a custom submit function to act on the progress bar being clicked on
   $form['#submit'][] = 'webform_skip_client_form_submit';
 }
 
@@ -42,7 +56,10 @@ function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form
  */
 function webform_skip_client_form_submit($form, &$form_state) {
   if ($form_state['values']['skip'] != 0) {
+    // set the webform element that controls which page we're on to the value set in the skip form element
     $form_state['storage']['page_num'] = $form_state['webform']['page_num'] = $form_state['values']['skip'];
+
+    // set the hidden skip form element to zero to return to webform's default behavior of "Previous" / "Next"
     $form_state['input']['skip'] = $form_state['values']['skip'] = 0;
   }
 }
@@ -59,6 +76,7 @@ function webform_skip_form_webform_configure_form_alter(&$form, &$form_state, $f
     '#weight' => 0,
   );
 
+  // add custom submit function to save the form element above
   $form['#submit'][] = 'webform_skip_configure_form_submit';
 }
 
@@ -72,21 +90,23 @@ function webform_skip_configure_form_submit($form, &$form_state) {
 
   $disabled_webforms = variable_get('webform_skip_disabled', array());
 
+  // if the box is checked, disable the webform skip behavior for this webform
   if ($form_state['values']['webform_skip_disabled']) {
     $disabled_webforms[$nid] = $nid;
+    variable_set('webform_skip_disabled', $disabled_webforms);
   }
-  else {
+  // else the box isn't checked, so make sure the webform skip behavior isn't disabled for this webform
+  elseif (isset($disabled_webforms[$nid])) {
     unset($disabled_webforms[$nid]);
+    variable_set('webform_skip_disabled', $disabled_webforms);
   }
-
-  variable_set('webform_skip_disabled', $disabled_webforms);
 }
 
 
 /**
- * Helper function.
+ * Helper function to tell whether a node ID has had this module's behavior disabled
  *
- * @return TRUE if a webform has had the clickable progress bar disabled in the webform settings
+ * @return TRUE if a webform of node ID $nid has had the clickable progress bar disabled in the webform settings
  */
 function webform_skip_webform_is_disabled($nid) {
   $disabled_webforms = variable_get('webform_skip_disabled', array());
