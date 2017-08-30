@@ -26,11 +26,23 @@ function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form
   drupal_add_js($path . '/webform_skip.js');
   drupal_add_css($path . '/webform_skip.css');
 
+  // add a JS setting so we know on the client-side
+  // what the label of the confirmation page in the progress bar is (if it exists)
+  $js = array(
+    'webform_skip' => array(
+      'confirmation_label' => NULL
+    )
+  );
+
   // if the confirmation page is shown in the progress bar
-  // don't show it as clickable
   if (!empty($form['#node']->webform['progressbar_include_confirmation'])) {
+    // don't show the confirmation page as clickable
     drupal_add_css('.webform-progressbar-page:last-child {cursor: default;}', 'inline');
+    // add the text of the progress bar as a JS setting
+    $js['webform_skip']['confirmation_label'] = $form['#node']->webform['progressbar_label_confirmation'];
   }
+
+  drupal_add_js($js, 'setting');
 
   // add a form element with all the available steps/pages as options
   // this element will be hidden from view via the CSS file added above

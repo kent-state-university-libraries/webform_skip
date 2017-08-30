@@ -9,7 +9,7 @@
       $('.webform-progressbar-page').on('click', function() {
         // don't do anything if they click the "complete" progress bar
         var text = $(this).find('.webform-progressbar-page-label').text().trim();
-        if (text === Drupal.t('Complete')) {
+        if (text === Drupal.settings.webform_skip.confirmation_label) {
           return;
         }
 
