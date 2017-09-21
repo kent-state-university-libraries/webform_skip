@@ -22,6 +22,19 @@ function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form
     return;
   }
 
+  // if we're editing an existing submission
+  if (!empty($form['#submission']->completed) && arg(3) ===  $form['#submission']->sid) {
+    // and this is the first time this form has loaded (i.e. we're on step #1)
+    if (empty($form_state['values'])) {
+      // go through all of the submissions values and set $form_state accordingly
+      // if we don't do this, if someone skips to step #4 and saves the submission
+      // the values in step #2 and step #3 would be deleted
+      foreach ($form['#submission']->data as $k => $v) {
+        $form_state['storage']['submitted'][$k] = $form_state['values']['submitted'][$k] = $v;
+      }
+    }
+  }
+
   $path = drupal_get_path('module', 'webform_skip');
   drupal_add_js($path . '/webform_skip.js');
   drupal_add_css($path . '/webform_skip.css');
