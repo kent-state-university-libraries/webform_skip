@@ -82,7 +82,7 @@ function webform_skip_form_webform_client_form_alter(&$form, &$form_state, $form
 function webform_skip_client_form_submit($form, &$form_state) {
   if ($form_state['values']['skip'] != 0) {
     // set the webform element that controls which page we're on to the value set in the skip form element
-    $form_state['storage']['page_num'] = $form_state['webform']['page_num'] = $form_state['values']['skip'];
+    $form_state['storage']['page_num'] = $form_state['webform']['page_num'] = (int) $form_state['values']['skip'];
 
     // set the hidden skip form element to zero to return to webform's default behavior of "Previous" / "Next"
     $form_state['input']['skip'] = $form_state['values']['skip'] = 0;
